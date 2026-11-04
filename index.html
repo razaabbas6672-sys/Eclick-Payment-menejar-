@@ -1,1 +1,156 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E click payment ledger by Raza</title>
+    <meta name="description" content="E click payment ledger by Raza - E-commerce client payments and accounting management tool.">
+    <meta name="keywords" content="E click payment ledger by Raza, Raza Abbas ledger, e-commerce account manager, payment ledger">
+    <meta name="author" content="Raza Abbas">
+    <meta name="monetag" content="d74da5998bb70bd9638fe7a059701f7a">
+
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: #f4f6f9; color: #333; padding: 15px; }
+        .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); overflow: hidden; }
+        header { background: #1e293b; color: white; padding: 20px; text-align: center; }
+        header h1 { font-size: 1.25rem; margin-bottom: 5px; }
+        header p { font-size: 0.85rem; color: #94a3b8; }
+        .summary-card { display: flex; justify-content: space-around; padding: 15px; background: #e2e8f0; border-bottom: 1px solid #cbd5e1; }
+        .summary-box { text-align: center; }
+        .summary-box span { display: block; font-size: 0.75rem; color: #64748b; }
+        .summary-box strong { font-size: 1.1rem; color: #0f172a; }
+        .form-section { padding: 20px; }
+        .form-group { margin-bottom: 12px; }
+        label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #475569; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; outline: none; }
+        input:focus, select:focus { border-color: #3b82f6; }
+        button.btn-add { width: 100%; background: #2563eb; color: white; border: none; padding: 12px; border-radius: 6px; font-size: 0.95rem; font-weight: bold; cursor: pointer; margin-top: 5px; }
+        .records-section { padding: 0 20px 20px 20px; }
+        .records-title { font-size: 0.95rem; margin-bottom: 10px; color: #334155; display: flex; justify-content: space-between; align-items: center; }
+        .record-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .record-info h4 { font-size: 0.9rem; color: #1e293b; }
+        .record-info p { font-size: 0.75rem; color: #64748b; margin-top: 2px; }
+        .record-amount { text-align: right; }
+        .record-amount .amount { font-weight: bold; font-size: 1rem; }
+        .paid { color: #16a34a; }
+        .pending { color: #dc2626; }
+        .btn-del { background: none; border: none; color: #94a3b8; font-size: 1.1rem; cursor: pointer; margin-left: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>E click payment ledger</h1>
+        <p>Managed by Raza</p>
+    </header>
+
+    <div class="summary-card">
+        <div class="summary-box">
+            <span>Total Billed</span>
+            <strong id="totalBilled">₹0</strong>
+        </div>
+        <div class="summary-box">
+            <span>Received</span>
+            <strong id="totalReceived" class="paid">₹0</strong>
+        </div>
+        <div class="summary-box">
+            <span>Pending</span>
+            <strong id="totalPending" class="pending">₹0</strong>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <div class="form-group">
+            <label>Client / Store Name</label>
+            <input type="text" id="clientName" placeholder="e.g. Amazon Seller Store">
+        </div>
+        <div class="form-group">
+            <label>Amount (₹)</label>
+            <input type="number" id="amount" placeholder="e.g. 5000">
+        </div>
+        <div class="form-group">
+            <label>Payment Status</label>
+            <select id="status">
+                <option value="Paid">Received / Paid</option>
+                <option value="Pending">Pending</option>
+            </select>
+        </div>
+        <button class="btn-add" onclick="addRecord()">Add Entry</button>
+    </div>
+
+    <div class="records-section">
+        <div class="records-title">
+            <span>Entries</span>
+            <span style="font-size: 0.75rem; color: #64748b;" id="recordCount">0 items</span>
+        </div>
+        <div id="recordsList"></div>
+    </div>
+</div>
+
+<script>
+    let ledgerData = JSON.parse(localStorage.getItem('eclick_ledger')) || [];
+
+    function updateView() {
+        const list = document.getElementById('recordsList');
+        list.innerHTML = '';
+        let billed = 0, received = 0, pending = 0;
+
+        ledgerData.forEach((item, index) => {
+            billed += Number(item.amount);
+            if (item.status === 'Paid') received += Number(item.amount);
+            if (item.status === 'Pending') pending += Number(item.amount);
+
+            const div = document.createElement('div');
+            div.className = 'record-card';
+            div.innerHTML = `
+                <div class="record-info">
+                    <h4>${item.client}</h4>
+                    <p>${item.date}</p>
+                </div>
+                <div style="display: flex; align-items: center;">
+                    <div class="record-amount">
+                        <div class="amount ${item.status === 'Paid' ? 'paid' : 'pending'}">₹${item.amount}</div>
+                        <div style="font-size: 0.7rem; color: #64748b;">${item.status}</div>
+                    </div>
+                    <button class="btn-del" onclick="deleteRecord(${index})">&times;</button>
+                </div>
+            `;
+            list.appendChild(div);
+        });
+
+        document.getElementById('totalBilled').innerText = '₹' + billed;
+        document.getElementById('totalReceived').innerText = '₹' + received;
+        document.getElementById('totalPending').innerText = '₹' + pending;
+        document.getElementById('recordCount').innerText = ledgerData.length + ' items';
+        localStorage.setItem('eclick_ledger', JSON.stringify(ledgerData));
+    }
+
+    function addRecord() {
+        const client = document.getElementById('clientName').value.trim();
+        const amount = document.getElementById('amount').value.trim();
+        const status = document.getElementById('status').value;
+
+        if (!client || !amount) {
+            alert('Kripya details bharein!');
+            return;
+        }
+
+        const date = new Date().toLocaleDateString('en-GB');
+        ledgerData.unshift({ client, amount, status, date });
+        document.getElementById('clientName').value = '';
+        document.getElementById('amount').value = '';
+        updateView();
+    }
+
+    function deleteRecord(index) {
+        ledgerData.splice(index, 1);
+        updateView();
+    }
+
+    updateView();
+</script>
+</body>
+</html>
 
